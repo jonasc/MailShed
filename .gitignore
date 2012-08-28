@@ -26,5 +26,9 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 
+# Sublime files
+MailShed.sublime-project
+MailShed.sublime-workspace
+
 # Config files
 schedule.cfg
