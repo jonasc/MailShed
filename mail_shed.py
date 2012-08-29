@@ -410,7 +410,7 @@ for line in data:
         log.debug('Date is already in UTC format: %s', date)
     except ValueError:
         try:
-            date = parse_datetime(date_part, dayfirst=True)
+            date = parse_datetime(date_part.replace('.', '-'), dayfirst=True)
             try:
                 date = TIMEZONE.localize(date, is_dst=None)
             except AmbiguousTimeError:
