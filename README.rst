@@ -30,6 +30,8 @@ look like this::
     # This is the string which separates your date from the real subject
     separator=|
     # In which folder should we look for mails to be sent?
+    # If your IMAP server supports XLIST you can use Flags such as \Drafs
+    # If it does not support XLIST you have to give the IMAP folder
     drafts=\Drafts
     # What is the timezone all dates should be in?
     timezone=Europe/Berlin
