@@ -30,5 +30,6 @@ pip-log.txt
 MailShed.sublime-project
 MailShed.sublime-workspace
 
-# Config files
-schedule.cfg
+# Config / log files
+mail_shed.cfg
+mail_shed.log
