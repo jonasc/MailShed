@@ -65,8 +65,7 @@ which outputs::
       -t TIMEZONE, --timezone TIMEZONE
                             set the timezone for dates (default: UTC)
       -c CONFIG, --config CONFIG
-                            set the config file (default:
-                            /home/jonas/.mail_shed.cfg)
+                            set the config file (default: ~/.mail_shed.cfg)
 
     IMAP and SMTP settings:
       -h HOST, --host HOST  set the IMAP and SMTP host
@@ -92,7 +91,7 @@ which outputs::
 
     logging and output settings:
       -l LOG_FILE, --log-file LOG_FILE
-                            set the log file (default: /home/jonas/mail_shed.log)
+                            set the log file (default: ~/mail_shed.log)
       -v, --verbose         be verbose
       -q, --quiet           don't output anything
 

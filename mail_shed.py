@@ -42,7 +42,7 @@ group_general.add_argument(
 )
 group_general.add_argument(
     '-c', '--config',
-    default=os.path.expanduser('~/.mail_shed.cfg'),
+    default='~/.mail_shed.cfg',
     help='set the config file (default: %(default)s)'
 )
 # IMAP and SMTP settings
@@ -91,8 +91,7 @@ group_smtp.add_argument(
 group_logging = argparser.add_argument_group('logging and output settings')
 group_logging.add_argument(
     '-l', '--log-file',
-    type=argparse.FileType('a'),
-    default=os.path.expanduser('~/mail_shed.log'),
+    default='~/mail_shed.log',
     help='set the log file (default: %(default)s)'
 )
 group = group_logging.add_mutually_exclusive_group()
@@ -118,7 +117,7 @@ argparser.add_argument(
 # Parse the arguments
 args = argparser.parse_args()
 # Make Path absolute
-args.config = os.path.abspath(args.config) if args.config else None
+args.config = os.path.abspath(os.path.expanduser(args.config)) if args.config else None
 
 #==============================================================================
 # Logging
@@ -131,8 +130,9 @@ if args.verbose:
 elif args.quiet:
     log_level = logging.WARNING
 logging.basicConfig(
-    format='%(asctime)s - %(levelname)s: %(message)s', stream=args.log_file,
-    level=log_level
+    format='%(asctime)s - %(levelname)s: %(message)s',
+    filename=os.path.abspath(os.path.expanduser(args.log_file)),
+    filemode='a', level=log_level
 )
 
 log_handler = logging.StreamHandler()
