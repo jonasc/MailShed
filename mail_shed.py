@@ -142,6 +142,7 @@ log_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
 log = logging.getLogger()
 log.addHandler(log_handler)
 
+log.info('Started')
 
 #==============================================================================
 # Config file parser
@@ -432,7 +433,7 @@ for line in data:
         mail['subject'] = subject
         try:
             smtp.sendmail(mail['from'], mail['to'], mail.as_string())
-            log.debug('Sent Email "%s"', mail['subject'])
+            log.info('Sent Email "%s"', mail['subject'])
             try:
                 imap.store(msg_id, '+FLAGS', '(\\Deleted)')
                 log.debug('Marked draft to be deleted')
@@ -454,7 +455,7 @@ for line in data:
         ).strftime('%d-%b-%Y %H:%M:%S') + mail['date'][mail['date'].rfind(' '):] + '"'
         try:
             result(imap.append(DRAFTS, '(\\Seen)', email_date, mail.as_string()))
-            log.debug('Written UTC date to mail subject')
+            log.info('Written UTC date to Email "%s"', mail['subject'])
             imap.store(msg_id, '+FLAGS', '(\\Deleted)')
             log.debug('Marked draft to be deleted')
         except Exception as e:
@@ -485,3 +486,5 @@ try:
     log.debug('SMTP quit')
 except Exception as e:
     log.warn('Could quit from SMTP: %s', e)
+
+log.info('Finished')
