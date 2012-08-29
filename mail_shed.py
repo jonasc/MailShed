@@ -149,6 +149,21 @@ log.info('Started')
 #==============================================================================
 from ConfigParser import SafeConfigParser as ConfigParser
 from StringIO import StringIO
+import stat
+import sys
+
+try:
+    file_stat = os.stat(args.config)
+except OSError as e:
+    if e.errno == 2:
+        log.critical('Config file "%s" does not exist', args.config)
+        sys.exit(1)
+    log.critical('File stat error -  %s', e)
+    sys.exit(2)
+
+if (stat.S_IRGRP | stat.S_IROTH) & file_stat.st_mode != 0:
+    log.critical('Config file "%s" is group- or world-readable. Please `chmod 400` or similar.', args.config)
+    sys.exit(3)
 
 config = ConfigParser()
 config.readfp(StringIO('''
@@ -190,8 +205,6 @@ for connection in ('imap', 'smtp'):
             not config.has_option(connection, key)
         ):
             config.set(connection, key, config.get('imap/smtp', key))
-
-import sys
 
 critical_error = False
 
