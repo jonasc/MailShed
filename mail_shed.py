@@ -268,10 +268,12 @@ class IMAP4_SSL(imaplib.IMAP4_SSL):
 #==============================================================================
 import smtplib
 import email
+import email.header
 import re
 from dateutil.parser import parse as parse_datetime
 from datetime import datetime
 import pytz
+import base64
 
 
 #==============================================================================
@@ -300,7 +302,8 @@ def parse_folder_line(line):
 
 
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S UTC'
-MAIL_DATE_FORMAT = '%a, %d %b %Y %H:%M:%S'
+MAIL_DATE_FORMAT = '%a, %d %b %Y %H:%M:%S %z'
+SMTP_DATE_FORMAT = '"%%b-%Y %H:%M:%S %z"'
 
 #==============================================================================
 # Main program
@@ -406,16 +409,24 @@ for line in data:
         continue
     mail = email.message_from_string(line[1])
 
-    # Check whether we can find the separator
-    if mail['subject'].find(SEPARATOR) == -1:
-        log.debug('Email with subject "%s" does not contain separator', mail['subject'])
-        continue
+    subject = mail['subject']
 
-    log.debug('Email with subject "%s" contains separator', mail['subject'])
+    # Check whether we can find the separator
+    if subject.find(SEPARATOR) == -1:
+
+        # Subject might be base64 encoded
+        decoded = email.header.decode_header(subject)[0]
+        if decoded[1] is not None:
+            subject = unicode(*decoded)
+        if decoded[1] is None or subject.find(SEPARATOR) == -1:
+            log.debug('Email with subject "%s" does not contain separator', subject)
+            continue
+
+    log.debug('Email with subject "%s" contains separator', subject)
 
     date_is_final = False
 
-    date_part = mail['subject'][:mail['subject'].find(SEPARATOR)].strip()
+    date_part = subject[:subject.find(SEPARATOR)].strip()
     try:
         date = datetime.strptime(date_part, DATE_FORMAT)
         date = pytz.UTC.localize(date)
@@ -433,7 +444,7 @@ for line in data:
             date = date.astimezone(pytz.UTC)
             log.debug('Parsed UTC date: %s', date)
         except ValueError:
-            log.warn('Cannot get datetime for subject %s', mail['subject'])
+            log.warn('Cannot get datetime for subject %s', subject)
             continue
 
     msg_id = line[0].split()[0]
@@ -441,34 +452,38 @@ for line in data:
     if date < datetime.now(pytz.UTC):
         # Send the mail out
         del mail['message-id']
-        subject = mail['subject'][mail['subject'].find(SEPARATOR) + 1:].strip()
+        subject = subject[subject.find(SEPARATOR) + 1:].strip()
         del mail['subject']
-        mail['subject'] = subject
+        mail['subject'] = email.header.make_header([(subject, 'utf-8')]).encode()
+
         try:
             smtp.sendmail(mail['from'], mail['to'], mail.as_string())
-            log.info('Sent Email "%s"', mail['subject'])
+            log.info('Sent Email "%s"', subject)
             try:
                 imap.store(msg_id, '+FLAGS', '(\\Deleted)')
                 log.debug('Marked draft to be deleted')
             except:
                 log.warn('Could not mark draft to be deleted')
         except:
-            log.warn('Could not send Email "%s"', mail['subject'])
+            log.warn('Could not send Email "%s"', subject)
 
     elif not date_is_final:
         # Write UTC date into subject
         del mail['message-id']
-        subject = date.strftime(DATE_FORMAT) + ' ' + mail['subject'][mail['subject'].find(SEPARATOR):].strip()
+        subject = date.strftime(DATE_FORMAT) + ' ' + subject[subject.find(SEPARATOR):].strip()
         del mail['subject']
-        mail['subject'] = subject
+        mail['subject'] = email.header.make_header([(subject, 'utf-8')]).encode()
 
-        email_date = '"' + datetime.strptime(
-            mail['date'][:mail['date'].rfind(' ')],
-            MAIL_DATE_FORMAT
-        ).strftime('%d-%b-%Y %H:%M:%S') + mail['date'][mail['date'].rfind(' '):] + '"'
+        # email_date = '"' + datetime.strptime(
+        #     mail['date'][:mail['date'].rfind(' ')],
+        #     MAIL_DATE_FORMAT
+        # ).strftime('%d-%b-%Y %H:%M:%S') + mail['date'][mail['date'].rfind(' '):] + '"'
+        del mail['date']
+        mail['date'] = datetime.now(TIMEZONE).strftime(MAIL_DATE_FORMAT)
+        email_date = datetime.now(TIMEZONE).strftime(SMTP_DATE_FORMAT)
         try:
             result(imap.append(DRAFTS, '(\\Seen)', email_date, mail.as_string()))
-            log.info('Written UTC date to Email "%s"', mail['subject'])
+            log.info('Written UTC date to Email "%s"', subject)
             imap.store(msg_id, '+FLAGS', '(\\Deleted)')
             log.debug('Marked draft to be deleted')
         except Exception as e:
