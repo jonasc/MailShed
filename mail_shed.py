@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 __version__ = '0.1'
@@ -147,8 +147,7 @@ log.info('Started')
 #==============================================================================
 # Config file parser
 #==============================================================================
-from ConfigParser import SafeConfigParser as ConfigParser
-from StringIO import StringIO
+from configparser import ConfigParser
 import stat
 import sys
 
@@ -166,7 +165,7 @@ if (stat.S_IRGRP | stat.S_IROTH) & file_stat.st_mode != 0:
     sys.exit(3)
 
 config = ConfigParser()
-config.readfp(StringIO('''
+config.read_string('''
 [imap/smtp]
 [imap]
 [smtp]
@@ -174,7 +173,7 @@ config.readfp(StringIO('''
 separator=|
 drafts=\\Drafts
 timezone=UTC
-'''))
+''')
 
 # Read config file and WARN if it has not been loaded
 if len(config.read(args.config)) == 0:
